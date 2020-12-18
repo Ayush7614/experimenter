@@ -109,7 +109,7 @@ There are three kinds of validation that need to be applied to forms: client-sid
 
 #### Client-side validation errors
 
-Client-side validation should be used to prevent invalid mutations from being attempted (i.e. the wrong type or fields that cannot be `null` in the database). It should be used to validate fields that are required for launch or to duplicate server-side validation.
+Client-side validation should be used to prevent invalid mutations from being attempted (i.e. the wrong type or fields that cannot be `null` in the database). It should NOT be used to validate fields that are required for launch or to duplicate server-side validation.
 
 #### Required for launch validation
 

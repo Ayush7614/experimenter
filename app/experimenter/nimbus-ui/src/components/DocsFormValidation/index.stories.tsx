@@ -16,7 +16,7 @@ storiesOf("Docs/Form Validation", module)
         <h2>Client-side Validation</h2>
         <p>
           Client-side validation should be used to prevent invalid mutations
-          from being attempted (i.e. the wrong type or fields that cannot be
+          from being attempted (i.e. the wrong type or fields that cannot be{" "}
           <code>null</code> in the{" "}
           <a href="https://github.com/mozilla/experimenter/blob/main/app/experimenter/experiments/models/nimbus.py">
             database
@@ -74,7 +74,7 @@ storiesOf("Docs/Form Validation", module)
           Some fields like publicDescription are allowed to be null while
           someone is editing a draft, but must be set before the experiment can
           move to the review status. You should NOT mark these fields{" "}
-          <code>required`</code>, but rather add help text that indicates they
+          <code>required</code>, but rather add help text that indicates they
           must be filled out before launch.
         </p>
         <ProtoForm
@@ -139,18 +139,6 @@ storiesOf("Docs/Form Validation", module)
         />
 
         <TestCases>
-          <tr>
-            <td>
-              Press the <code>Save</code> button. (The input value should be{" "}
-              <code>really common name</code>, which the fake server will reject
-              as already taken).
-            </td>
-            <td>
-              The button should say <code>Saving</code> and be disabled while
-              the server is waiting to respond. <br />
-              The input is marked as invalid and has an error message.
-            </td>
-          </tr>
           <tr>
             <td>
               Press the <code>Save</code> button. (The input value should be{" "}

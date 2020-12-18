@@ -5,8 +5,9 @@
 import React, { useCallback } from "react";
 import Form from "react-bootstrap/Form";
 import Alert from "react-bootstrap/Alert";
-import { useCommonForm, FieldNames } from "../../hooks";
+
 import { Card, Table } from "react-bootstrap";
+import { useCommonForm, FieldNames } from "../../../src/hooks";
 
 export const TestCases: React.FunctionComponent = ({ children }) => (
   <Table>

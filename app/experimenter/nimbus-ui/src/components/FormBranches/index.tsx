@@ -74,6 +74,7 @@ export const FormBranches = ({
     formState: { isDirty, errors, touched },
   } = formMethods;
 
+  // TODO: Should be able to remove once FormBranches starts using useCommonForm
   const shouldWarnOnExit = useExitWarning();
   useEffect(() => {
     shouldWarnOnExit(isDirty);

@@ -2,10 +2,11 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-import React from "react";
+import React, { useEffect } from "react";
 import { RegisterOptions, FieldError } from "react-hook-form";
 import Form from "react-bootstrap/Form";
 import { useForm } from "react-hook-form";
+import { useExitWarning } from ".";
 
 // TODO: 'any' type on `onChange={(selectedOptions) => ...`,
 // it wants this, but can't seem to coerce it into SelectOption type
@@ -26,6 +27,7 @@ export function useCommonForm<FieldNames extends string>(
     register,
     reset,
     errors,
+    control,
     formState: { isSubmitted, isDirty, touched, isValid: isClientValid },
   } = useForm({
     mode: "onTouched",
@@ -34,6 +36,11 @@ export function useCommonForm<FieldNames extends string>(
 
   const isValid = isServerValid && isClientValid;
   const isDirtyUnsaved = isDirty && !(isValid && isSubmitted);
+  const shouldWarnOnExit = useExitWarning();
+
+  useEffect(() => {
+    shouldWarnOnExit(isDirtyUnsaved);
+  }, [shouldWarnOnExit, isDirtyUnsaved]);
 
   const hideSubmitError = <K extends FieldNames>(name: K) => {
     if (submitErrors[name]) {
@@ -71,6 +78,8 @@ export function useCommonForm<FieldNames extends string>(
     name: K,
     setValuesFromOptions: React.Dispatch<React.SetStateAction<string[]>>,
   ) => ({
+    name,
+    control,
     defaultValue: defaultValues[name],
     onChange: (selectedOptions: any) => {
       setValuesFromOptions(getValuesFromOptions(selectedOptions));
@@ -108,7 +117,6 @@ export function useCommonForm<FieldNames extends string>(
     handleSubmit,
     reset,
     isValid,
-    isDirtyUnsaved,
     isSubmitted,
   };
 }

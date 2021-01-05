@@ -2,11 +2,11 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-import React, { useCallback, useEffect } from "react";
+import React, { useCallback } from "react";
 import Form from "react-bootstrap/Form";
 import Alert from "react-bootstrap/Alert";
 import { getExperiment } from "../../types/getExperiment";
-import { useExitWarning, useCommonForm } from "../../hooks";
+import { useCommonForm } from "../../hooks";
 import { useConfig } from "../../hooks/useConfig";
 import InlineErrorIcon from "../InlineErrorIcon";
 
@@ -53,7 +53,6 @@ const FormOverview = ({
     FormErrors,
     formControlAttrs,
     isValid,
-    isDirtyUnsaved,
     handleSubmit,
     reset,
     isSubmitted,
@@ -63,11 +62,6 @@ const FormOverview = ({
     submitErrors,
     setSubmitErrors,
   );
-
-  const shouldWarnOnExit = useExitWarning();
-  useEffect(() => {
-    shouldWarnOnExit(isDirtyUnsaved);
-  }, [shouldWarnOnExit, isDirtyUnsaved]);
 
   const handleSubmitAfterValidation = useCallback(
     (data: Record<string, any>) => {

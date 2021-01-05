@@ -2,7 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useState } from "react";
 import Form from "react-bootstrap/Form";
 import Alert from "react-bootstrap/Alert";
 import Select from "react-select";
@@ -11,7 +11,8 @@ import {
   getExperiment_experimentBySlug_primaryProbeSets,
   getExperiment_experimentBySlug_secondaryProbeSets,
 } from "../../types/getExperiment";
-import { useCommonForm, useConfig, useExitWarning } from "../../hooks";
+import { useCommonForm, useConfig } from "../../hooks";
+import { Controller } from "react-hook-form";
 import { SelectOption } from "../../hooks/useCommonForm";
 import ReactTooltip from "react-tooltip";
 import { ReactComponent as Info } from "../../images/info.svg";
@@ -100,7 +101,6 @@ const FormMetrics = ({
     FormErrors,
     formSelectAttrs,
     isValid,
-    isDirtyUnsaved,
     handleSubmit,
     reset,
     isSubmitted,
@@ -110,11 +110,6 @@ const FormMetrics = ({
     submitErrors,
     setSubmitErrors,
   );
-
-  const shouldWarnOnExit = useExitWarning();
-  useEffect(() => {
-    shouldWarnOnExit(isDirtyUnsaved);
-  }, [shouldWarnOnExit, isDirtyUnsaved]);
 
   const handleSubmitAfterValidation = useCallback(() => {
     if (isLoading) return;
@@ -163,7 +158,8 @@ const FormMetrics = ({
           />
           <ReactTooltip />
         </Form.Label>
-        <Select
+        <Controller
+          as={Select}
           isMulti
           {...formSelectAttrs("primaryProbeSetIds", setPrimaryProbeSetIds)}
           options={primaryProbeSetOptions}
@@ -190,7 +186,8 @@ const FormMetrics = ({
             className="ml-1"
           />
         </Form.Label>
-        <Select
+        <Controller
+          as={Select}
           isMulti
           {...formSelectAttrs("secondaryProbeSetIds", setSecondaryProbeSetIds)}
           options={secondaryProbeSetOptions}

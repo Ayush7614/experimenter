@@ -4,7 +4,7 @@ from parameterized import parameterized
 
 from experimenter.experiments.api.v5.serializers import (
     NimbusBranchSerializer,
-    NimbusExperimentUpdateSerializer,
+    NimbusExperimentSerializer,
     NimbusReadyForReviewSerializer,
 )
 from experimenter.experiments.constants.nimbus import NimbusConstants
@@ -17,158 +17,6 @@ from experimenter.experiments.tests.factories import (
 )
 from experimenter.experiments.tests.factories.nimbus import NimbusFeatureConfigFactory
 from experimenter.openidc.tests.factories import UserFactory
-
-BASIC_JSON_SCHEMA = """\
-{
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "description": "Password autocomplete",
-  "type": "object",
-  "properties": {
-    "directMigrateSingleProfile": {
-      "description": "Should we directly migrate a single profile?",
-      "type": "boolean"
-     }
-   },
-  "additionalProperties": false
-}
-"""
-
-
-class TestCreateNimbusExperimentOverviewSerializer(TestCase):
-    maxDiff = None
-
-    def setUp(self):
-        super().setUp()
-        self.user = UserFactory()
-
-    def test_serializer_creates_experiment_and_sets_slug_and_owner(self):
-        data = {
-            "name": "Test 1234",
-            "hypothesis": "Test hypothesis",
-            "application": NimbusExperiment.Application.DESKTOP.value,
-            "public_description": "Test description",
-        }
-
-        serializer = NimbusExperimentUpdateSerializer(
-            data=data, context={"user": self.user}
-        )
-        self.assertTrue(serializer.is_valid())
-        experiment = serializer.save()
-
-        self.assertEqual(experiment.slug, slugify(data["name"]))
-        self.assertEqual(experiment.name, data["name"])
-        self.assertEqual(experiment.application, data["application"])
-        self.assertEqual(experiment.hypothesis, data["hypothesis"])
-        self.assertEqual(experiment.public_description, data["public_description"])
-        # Owner should match the email of the user who created the experiment
-        self.assertEqual(experiment.owner, self.user)
-
-    def test_serializer_rejects_bad_name(self):
-        data = {
-            "name": "&^%&^%&^%&^%^&%^&",
-            "hypothesis": "Test hypothesis",
-            "application": NimbusExperiment.Application.DESKTOP.value,
-            "public_description": "Test description",
-        }
-
-        serializer = NimbusExperimentUpdateSerializer(
-            data=data, context={"user": self.user}
-        )
-        self.assertFalse(serializer.is_valid())
-        self.assertIn(
-            "Name needs to contain alphanumeric characters", serializer.errors["name"]
-        )
-
-    def test_serializer_returns_error_for_non_unique_slug(self):
-        NimbusExperimentFactory.create_with_status(
-            NimbusExperiment.Status.ACCEPTED,
-            name="non unique slug",
-            slug="non-unique-slug",
-        )
-
-        data = {
-            "name": "non-unique slug",
-            "hypothesis": "Test hypothesis",
-            "application": NimbusExperiment.Application.DESKTOP.value,
-            "public_description": "Test description",
-        }
-
-        serializer = NimbusExperimentUpdateSerializer(
-            data=data, context={"user": self.user}
-        )
-        self.assertFalse(serializer.is_valid())
-
-        self.assertIn(
-            "Name maps to a pre-existing slug, please choose another name",
-            serializer.errors["name"],
-        )
-
-    def test_serializer_rejects_default_hypothesis(self):
-        data = {
-            "name": "Test 1234",
-            "hypothesis": NimbusExperiment.HYPOTHESIS_DEFAULT,
-            "application": NimbusExperiment.Application.DESKTOP.value,
-            "public_description": "Test description",
-        }
-
-        serializer = NimbusExperimentUpdateSerializer(
-            data=data, context={"user": self.user}
-        )
-        self.assertFalse(serializer.is_valid())
-        self.assertIn("hypothesis", serializer.errors)
-
-    def test_saves_new_experiment_with_changelog(self):
-        data = {
-            "application": NimbusExperiment.Application.DESKTOP,
-            "hypothesis": "It does the thing",
-            "name": "The Thing",
-            "public_description": "Does it do the thing?",
-        }
-
-        serializer = NimbusExperimentUpdateSerializer(
-            data=data, context={"user": self.user}
-        )
-
-        self.assertTrue(serializer.is_valid())
-
-        experiment = serializer.save()
-        self.assertEqual(experiment.changes.count(), 1)
-        self.assertEqual(experiment.application, NimbusExperiment.Application.DESKTOP)
-        self.assertEqual(experiment.hypothesis, "It does the thing")
-        self.assertEqual(experiment.name, "The Thing")
-        self.assertEqual(experiment.slug, "the-thing")
-
-    def test_saves_existing_experiment_with_changelog(self):
-        experiment = NimbusExperimentFactory.create_with_status(
-            NimbusExperiment.Status.DRAFT,
-            application=NimbusExperiment.Application.FENIX,
-            hypothesis="Existing hypothesis",
-            name="Existing Name",
-            slug="existing-name",
-            public_description="Existing public description",
-        )
-        self.assertEqual(experiment.changes.count(), 1)
-
-        data = {
-            "application": NimbusExperiment.Application.DESKTOP,
-            "hypothesis": "New Hypothesis",
-            "name": "New Name",
-            "public_description": "New public description",
-        }
-
-        serializer = NimbusExperimentUpdateSerializer(
-            experiment, data=data, context={"user": self.user}
-        )
-
-        self.assertTrue(serializer.is_valid(), serializer.errors)
-
-        experiment = serializer.save()
-        self.assertEqual(experiment.changes.count(), 2)
-        self.assertEqual(experiment.application, NimbusExperiment.Application.DESKTOP)
-        self.assertEqual(experiment.hypothesis, "New Hypothesis")
-        self.assertEqual(experiment.name, "New Name")
-        self.assertEqual(experiment.slug, "existing-name")
-        self.assertEqual(experiment.public_description, "New public description")
 
 
 class TestNimbusBranchSerializer(TestCase):
@@ -249,7 +97,7 @@ class TestNimbusExperimentDocumentationLinkMixin(TestCase):
                 {"title": "expected 2", "link": "https://example.com/2"},
             ],
         }
-        serializer = NimbusExperimentUpdateSerializer(
+        serializer = NimbusExperimentSerializer(
             experiment, data=data, partial=True, context={"user": self.user}
         )
         self.assertTrue(serializer.is_valid())
@@ -269,7 +117,7 @@ class TestNimbusExperimentDocumentationLinkMixin(TestCase):
                 }
             )
         data = {"public_description": "changed"}
-        serializer = NimbusExperimentUpdateSerializer(
+        serializer = NimbusExperimentSerializer(
             experiment, data=data, partial=True, context={"user": self.user}
         )
         self.assertTrue(serializer.is_valid())
@@ -289,8 +137,22 @@ class TestNimbusExperimentDocumentationLinkMixin(TestCase):
             )
 
 
-class TestNimbusBranchUpdateSerializer(TestCase):
+class TestNimbusExperimentBranchMixin(TestCase):
     maxDiff = None
+    BASIC_JSON_SCHEMA = """\
+    {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "description": "Password autocomplete",
+    "type": "object",
+    "properties": {
+        "directMigrateSingleProfile": {
+        "description": "Should we directly migrate a single profile?",
+        "type": "boolean"
+        }
+    },
+    "additionalProperties": false
+    }
+    """
 
     def setUp(self):
         super().setUp()
@@ -312,7 +174,7 @@ class TestNimbusBranchUpdateSerializer(TestCase):
             "reference_branch": reference_branch,
             "treatment_branches": treatment_branches,
         }
-        serializer = NimbusExperimentUpdateSerializer(
+        serializer = NimbusExperimentSerializer(
             experiment, data=data, partial=True, context={"user": self.user}
         )
         self.assertTrue(serializer.is_valid())
@@ -328,7 +190,7 @@ class TestNimbusBranchUpdateSerializer(TestCase):
                 self.assertEqual(getattr(branch, key), val)
 
     def test_serializer_feature_config_validation(self):
-        feature_config = NimbusFeatureConfigFactory.create(schema=BASIC_JSON_SCHEMA)
+        feature_config = NimbusFeatureConfigFactory.create(schema=self.BASIC_JSON_SCHEMA)
         experiment = NimbusExperimentFactory(
             status=NimbusExperiment.Status.DRAFT,
         )
@@ -361,7 +223,7 @@ class TestNimbusBranchUpdateSerializer(TestCase):
             "reference_branch": reference_branch,
             "treatment_branches": treatment_branches,
         }
-        serializer = NimbusExperimentUpdateSerializer(
+        serializer = NimbusExperimentSerializer(
             experiment, data=data, partial=True, context={"user": self.user}
         )
 
@@ -378,7 +240,7 @@ class TestNimbusBranchUpdateSerializer(TestCase):
                 self.assertEqual(getattr(branch, key), val)
 
     def test_serializer_feature_config_validation_reference_value_schema_error(self):
-        feature_config = NimbusFeatureConfigFactory.create(schema=BASIC_JSON_SCHEMA)
+        feature_config = NimbusFeatureConfigFactory.create(schema=self.BASIC_JSON_SCHEMA)
         experiment = NimbusExperimentFactory(
             status=NimbusExperiment.Status.DRAFT,
         )
@@ -411,7 +273,7 @@ class TestNimbusBranchUpdateSerializer(TestCase):
             "reference_branch": reference_branch,
             "treatment_branches": treatment_branches,
         }
-        serializer = NimbusExperimentUpdateSerializer(
+        serializer = NimbusExperimentSerializer(
             experiment, data=data, partial=True, context={"user": self.user}
         )
         self.assertFalse(serializer.is_valid())
@@ -423,7 +285,7 @@ class TestNimbusBranchUpdateSerializer(TestCase):
         self.assertEqual(len(serializer.errors), 1)
 
     def test_serializer_feature_config_validation_bad_json_value(self):
-        feature_config = NimbusFeatureConfig(schema=BASIC_JSON_SCHEMA)
+        feature_config = NimbusFeatureConfig(schema=self.BASIC_JSON_SCHEMA)
         feature_config.save()
         experiment = NimbusExperimentFactory(
             status=NimbusExperiment.Status.DRAFT,
@@ -452,7 +314,7 @@ class TestNimbusBranchUpdateSerializer(TestCase):
             "reference_branch": reference_branch,
             "treatment_branches": treatment_branches,
         }
-        serializer = NimbusExperimentUpdateSerializer(
+        serializer = NimbusExperimentSerializer(
             experiment, data=data, partial=True, context={"user": self.user}
         )
         self.assertFalse(serializer.is_valid())
@@ -491,7 +353,7 @@ class TestNimbusBranchUpdateSerializer(TestCase):
             "reference_branch": reference_branch,
             "treatment_branches": treatment_branches,
         }
-        serializer = NimbusExperimentUpdateSerializer(
+        serializer = NimbusExperimentSerializer(
             experiment, data=data, partial=True, context={"user": self.user}
         )
         self.assertFalse(serializer.is_valid())
@@ -502,7 +364,7 @@ class TestNimbusBranchUpdateSerializer(TestCase):
         self.assertEqual(len(serializer.errors), 1)
 
     def test_serializer_feature_config_validation_treatment_value_schema_error(self):
-        feature_config = NimbusFeatureConfig(schema=BASIC_JSON_SCHEMA)
+        feature_config = NimbusFeatureConfig(schema=self.BASIC_JSON_SCHEMA)
         feature_config.save()
         experiment = NimbusExperimentFactory(
             status=NimbusExperiment.Status.DRAFT,
@@ -536,7 +398,7 @@ class TestNimbusBranchUpdateSerializer(TestCase):
             "reference_branch": reference_branch,
             "treatment_branches": treatment_branches,
         }
-        serializer = NimbusExperimentUpdateSerializer(
+        serializer = NimbusExperimentSerializer(
             experiment, data=data, partial=True, context={"user": self.user}
         )
         self.assertFalse(serializer.is_valid())
@@ -553,7 +415,7 @@ class TestNimbusBranchUpdateSerializer(TestCase):
         )
         branch_count = experiment.branches.count()
 
-        serializer = NimbusExperimentUpdateSerializer(
+        serializer = NimbusExperimentSerializer(
             instance=experiment,
             data={"name": "new name"},
             context={"user": UserFactory()},
@@ -566,7 +428,7 @@ class TestNimbusBranchUpdateSerializer(TestCase):
         self.assertEqual(experiment.name, "new name")
 
 
-class TestNimbusProbeSetUpdateSerializer(TestCase):
+class TestNimbusExperimentProbeSetMixin(TestCase):
     def test_serializer_updates_probe_sets_on_experiment(self):
         user = UserFactory()
         experiment = NimbusExperimentFactory(probe_sets=[])
@@ -576,7 +438,7 @@ class TestNimbusProbeSetUpdateSerializer(TestCase):
         ]
         secondary_probe_set_ids = [NimbusProbeSetFactory().id for i in range(3)]
 
-        serializer = NimbusExperimentUpdateSerializer(
+        serializer = NimbusExperimentSerializer(
             experiment,
             {
                 "primary_probe_set_ids": primary_probe_set_ids,
@@ -608,7 +470,7 @@ class TestNimbusProbeSetUpdateSerializer(TestCase):
         experiment = NimbusExperimentFactory(probe_sets=[])
         probe_sets = [NimbusProbeSetFactory() for i in range(3)]
 
-        serializer = NimbusExperimentUpdateSerializer(
+        serializer = NimbusExperimentSerializer(
             experiment,
             {
                 "primary_probe_set_ids": [
@@ -632,7 +494,7 @@ class TestNimbusProbeSetUpdateSerializer(TestCase):
         experiment = NimbusExperimentFactory(probe_sets=[])
         probe_sets = [NimbusProbeSetFactory() for i in range(3)]
 
-        serializer = NimbusExperimentUpdateSerializer(
+        serializer = NimbusExperimentSerializer(
             experiment,
             {
                 "primary_probe_set_ids": [p.id for p in probe_sets],
@@ -649,10 +511,220 @@ class TestNimbusProbeSetUpdateSerializer(TestCase):
             serializer.errors["primary_probe_set_ids"][0],
         )
 
+    def test_does_not_delete_probesets_when_other_fields_specified(self):
+        experiment = NimbusExperimentFactory.create_with_status(
+            NimbusExperiment.Status.DRAFT
+        )
+        probesets_count = experiment.probe_sets.count()
 
-class TestNimbusAudienceUpdateSerializer(TestCase):
+        serializer = NimbusExperimentSerializer(
+            instance=experiment,
+            data={"name": "new name"},
+            context={"user": UserFactory()},
+        )
+        self.assertTrue(serializer.is_valid())
+        serializer.save()
+
+        experiment = NimbusExperiment.objects.get(id=experiment.id)
+        self.assertEqual(experiment.probe_sets.count(), probesets_count)
+        self.assertEqual(experiment.name, "new name")
+
+
+class TestNimbusExperimentSerializer(TestCase):
+    maxDiff = None
+
+    def setUp(self):
+        super().setUp()
+        self.user = UserFactory()
+
+    def test_required_fields_for_creating_experiment(self):
+        data = {
+            "name": "",
+            "hypothesis": NimbusExperiment.HYPOTHESIS_DEFAULT,
+            "application": "",
+        }
+
+        serializer = NimbusExperimentSerializer(
+            data=data,
+            context={"user": self.user},
+        )
+
+        self.assertFalse(serializer.is_valid())
+        self.assertIn("name", serializer.errors)
+        self.assertIn("hypothesis", serializer.errors)
+        self.assertIn("application", serializer.errors)
+
+    def test_allows_empty_values_for_all_fields_existing_experiment(self):
+        experiment = NimbusExperimentFactory.create_with_status(
+            NimbusExperiment.Status.DRAFT
+        )
+        data = {
+            "name": "",
+            "hypothesis": "",
+            "public_description": "",
+            "feature_config": None,
+            "treatment_branches": [],
+            "primary_probe_set_ids": [],
+            "secondary_probe_set_ids": [],
+            "channel": NimbusExperiment.Channel.NO_CHANNEL,
+            "firefox_min_version": NimbusExperiment.Version.NO_VERSION,
+            "population_percent": "0.0",
+            "proposed_duration": 0,
+            "proposed_enrollment": 0,
+            "targeting_config_slug": NimbusExperiment.TargetingConfig.NO_TARGETING,
+            "total_enrolled_clients": 0,
+        }
+
+        serializer = NimbusExperimentSerializer(
+            experiment,
+            data,
+            context={"user": self.user},
+        )
+
+        self.assertTrue(serializer.is_valid(), serializer.errors)
+
+        serializer.save()
+        experiment = NimbusExperiment.objects.get(id=experiment.id)
+        self.assertEqual(experiment.name, "")
+        self.assertEqual(experiment.hypothesis, "")
+        self.assertEqual(experiment.public_description, "")
+        self.assertEqual(experiment.feature_config, None)
+        self.assertEqual(experiment.treatment_branches, [])
+        self.assertEqual(experiment.primary_probe_sets.count(), 0)
+        self.assertEqual(experiment.secondary_probe_sets.count(), 0)
+        self.assertEqual(experiment.channel, NimbusExperiment.Channel.NO_CHANNEL)
+        self.assertEqual(
+            experiment.firefox_min_version, NimbusExperiment.Version.NO_VERSION
+        )
+        self.assertEqual(experiment.population_percent, 0.0)
+        self.assertEqual(experiment.proposed_duration, 0)
+        self.assertEqual(experiment.proposed_enrollment, 0)
+        self.assertEqual(
+            experiment.targeting_config_slug,
+            NimbusExperiment.TargetingConfig.NO_TARGETING,
+        )
+        self.assertEqual(experiment.total_enrolled_clients, 0)
+
+    def test_serializer_creates_experiment_and_sets_slug_and_owner(self):
+        data = {
+            "name": "Test 1234",
+            "hypothesis": "Test hypothesis",
+            "application": NimbusExperiment.Application.DESKTOP.value,
+            "public_description": "Test description",
+        }
+
+        serializer = NimbusExperimentSerializer(data=data, context={"user": self.user})
+        self.assertTrue(serializer.is_valid())
+        experiment = serializer.save()
+
+        self.assertEqual(experiment.slug, slugify(data["name"]))
+        self.assertEqual(experiment.name, data["name"])
+        self.assertEqual(experiment.application, data["application"])
+        self.assertEqual(experiment.hypothesis, data["hypothesis"])
+        self.assertEqual(experiment.public_description, data["public_description"])
+        # Owner should match the email of the user who created the experiment
+        self.assertEqual(experiment.owner, self.user)
+
+    def test_serializer_rejects_bad_name(self):
+        data = {
+            "name": "&^%&^%&^%&^%^&%^&",
+            "hypothesis": "Test hypothesis",
+            "application": NimbusExperiment.Application.DESKTOP.value,
+            "public_description": "Test description",
+        }
+
+        serializer = NimbusExperimentSerializer(data=data, context={"user": self.user})
+        self.assertFalse(serializer.is_valid())
+        self.assertIn(
+            "Name needs to contain alphanumeric characters", serializer.errors["name"]
+        )
+
+    def test_serializer_returns_error_for_non_unique_slug(self):
+        NimbusExperimentFactory.create_with_status(
+            NimbusExperiment.Status.ACCEPTED,
+            name="non unique slug",
+            slug="non-unique-slug",
+        )
+
+        data = {
+            "name": "non-unique slug",
+            "hypothesis": "Test hypothesis",
+            "application": NimbusExperiment.Application.DESKTOP.value,
+            "public_description": "Test description",
+        }
+
+        serializer = NimbusExperimentSerializer(data=data, context={"user": self.user})
+        self.assertFalse(serializer.is_valid())
+
+        self.assertIn(
+            "Name maps to a pre-existing slug, please choose another name",
+            serializer.errors["name"],
+        )
+
+    def test_serializer_rejects_default_hypothesis(self):
+        data = {
+            "name": "Test 1234",
+            "hypothesis": NimbusExperiment.HYPOTHESIS_DEFAULT,
+            "application": NimbusExperiment.Application.DESKTOP.value,
+            "public_description": "Test description",
+        }
+
+        serializer = NimbusExperimentSerializer(data=data, context={"user": self.user})
+        self.assertFalse(serializer.is_valid())
+        self.assertIn("hypothesis", serializer.errors)
+
+    def test_saves_new_experiment_with_changelog(self):
+        data = {
+            "application": NimbusExperiment.Application.DESKTOP,
+            "hypothesis": "It does the thing",
+            "name": "The Thing",
+            "public_description": "Does it do the thing?",
+        }
+
+        serializer = NimbusExperimentSerializer(data=data, context={"user": self.user})
+
+        self.assertTrue(serializer.is_valid())
+
+        experiment = serializer.save()
+        self.assertEqual(experiment.changes.count(), 1)
+        self.assertEqual(experiment.application, NimbusExperiment.Application.DESKTOP)
+        self.assertEqual(experiment.hypothesis, "It does the thing")
+        self.assertEqual(experiment.name, "The Thing")
+        self.assertEqual(experiment.slug, "the-thing")
+
+    def test_saves_existing_experiment_with_changelog(self):
+        experiment = NimbusExperimentFactory.create_with_status(
+            NimbusExperiment.Status.DRAFT,
+            application=NimbusExperiment.Application.FENIX,
+            hypothesis="Existing hypothesis",
+            name="Existing Name",
+            slug="existing-name",
+            public_description="Existing public description",
+        )
+        self.assertEqual(experiment.changes.count(), 1)
+
+        data = {
+            "application": NimbusExperiment.Application.DESKTOP,
+            "hypothesis": "New Hypothesis",
+            "name": "New Name",
+            "public_description": "New public description",
+        }
+
+        serializer = NimbusExperimentSerializer(
+            experiment, data=data, context={"user": self.user}
+        )
+
+        self.assertTrue(serializer.is_valid(), serializer.errors)
+
+        experiment = serializer.save()
+        self.assertEqual(experiment.changes.count(), 2)
+        self.assertEqual(experiment.application, NimbusExperiment.Application.DESKTOP)
+        self.assertEqual(experiment.hypothesis, "New Hypothesis")
+        self.assertEqual(experiment.name, "New Name")
+        self.assertEqual(experiment.slug, "existing-name")
+        self.assertEqual(experiment.public_description, "New public description")
+
     def test_serializer_updates_audience_on_experiment(self):
-        user = UserFactory()
         experiment = NimbusExperimentFactory(
             channel=NimbusExperiment.Channel.NO_CHANNEL,
             application=NimbusExperiment.Application.DESKTOP,
@@ -663,7 +735,7 @@ class TestNimbusAudienceUpdateSerializer(TestCase):
             targeting_config_slug=NimbusExperiment.TargetingConfig.NO_TARGETING,
             total_enrolled_clients=0,
         )
-        serializer = NimbusExperimentUpdateSerializer(
+        serializer = NimbusExperimentSerializer(
             experiment,
             {
                 "channel": NimbusConstants.Channel.DESKTOP_BETA.value,
@@ -676,7 +748,7 @@ class TestNimbusAudienceUpdateSerializer(TestCase):
                 ),
                 "total_enrolled_clients": 100,
             },
-            context={"user": user},
+            context={"user": self.user},
         )
         self.assertEqual(experiment.changes.count(), 0)
         self.assertTrue(serializer.is_valid(), serializer.errors)
@@ -696,7 +768,6 @@ class TestNimbusAudienceUpdateSerializer(TestCase):
         self.assertEqual(experiment.total_enrolled_clients, 100)
 
     def test_serializer_updates_audience_on_experiment_invalid_channels(self):
-        user = UserFactory()
         experiment = NimbusExperimentFactory(
             channel=NimbusExperiment.Channel.NO_CHANNEL,
             application=NimbusExperiment.Application.FENIX,
@@ -707,7 +778,7 @@ class TestNimbusAudienceUpdateSerializer(TestCase):
             targeting_config_slug=NimbusExperiment.TargetingConfig.NO_TARGETING,
             total_enrolled_clients=0,
         )
-        serializer = NimbusExperimentUpdateSerializer(
+        serializer = NimbusExperimentSerializer(
             experiment,
             {
                 "channel": NimbusConstants.Channel.DESKTOP_BETA.value,
@@ -720,7 +791,7 @@ class TestNimbusAudienceUpdateSerializer(TestCase):
                 ),
                 "total_enrolled_clients": 100,
             },
-            context={"user": user},
+            context={"user": self.user},
         )
         self.assertEqual(experiment.changes.count(), 0)
         self.assertFalse(serializer.is_valid())
@@ -742,12 +813,11 @@ class TestNimbusAudienceUpdateSerializer(TestCase):
         ]
     )
     def test_population_percent_bounds_check(self, expected_valid, population_percent):
-        user = UserFactory()
         experiment = NimbusExperimentFactory()
-        serializer = NimbusExperimentUpdateSerializer(
+        serializer = NimbusExperimentSerializer(
             experiment,
             {"population_percent": population_percent},
-            context={"user": user},
+            context={"user": self.user},
         )
         self.assertEqual(serializer.is_valid(), expected_valid)
         if not expected_valid:
@@ -755,17 +825,9 @@ class TestNimbusAudienceUpdateSerializer(TestCase):
         else:
             self.assertNotIn("population_percent", serializer.errors)
 
-
-class TestNimbusStatusUpdateSerializer(TestCase):
-    maxDiff = None
-
-    def setUp(self):
-        super().setUp()
-        self.user = UserFactory()
-
     def test_status_update(self):
         experiment = NimbusExperimentFactory(status=NimbusExperiment.Status.DRAFT)
-        serializer = NimbusExperimentUpdateSerializer(
+        serializer = NimbusExperimentSerializer(
             experiment,
             data={"status": NimbusExperiment.Status.REVIEW},
             context={"user": self.user},
@@ -778,7 +840,7 @@ class TestNimbusStatusUpdateSerializer(TestCase):
 
     def test_status_with_invalid_target_status(self):
         experiment = NimbusExperimentFactory(status=NimbusExperiment.Status.DRAFT)
-        serializer = NimbusExperimentUpdateSerializer(
+        serializer = NimbusExperimentSerializer(
             experiment,
             data={"status": NimbusExperiment.Status.ACCEPTED},
             context={"user": self.user},
@@ -793,7 +855,7 @@ class TestNimbusStatusUpdateSerializer(TestCase):
 
     def test_status_with_invalid_existing_status(self):
         experiment = NimbusExperimentFactory(status=NimbusExperiment.Status.ACCEPTED)
-        serializer = NimbusExperimentUpdateSerializer(
+        serializer = NimbusExperimentSerializer(
             experiment,
             data={"status": NimbusExperiment.Status.REVIEW},
             context={"user": self.user},

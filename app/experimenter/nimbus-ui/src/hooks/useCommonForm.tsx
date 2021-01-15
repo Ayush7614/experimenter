@@ -8,38 +8,6 @@ import Form from "react-bootstrap/Form";
 import { useForm } from "react-hook-form";
 import { camelToSnakeCase } from "../lib/caseConversions";
 
-// exported for testing
-export const overviewFieldNames = [
-  "name",
-  "hypothesis",
-  "application",
-  "publicDescription",
-] as const;
-
-export const audienceFieldNames = [
-  "channel",
-  "firefoxMinVersion",
-  "targetingConfigSlug",
-  "populationPercent",
-  "totalEnrolledClients",
-  "proposedEnrollment",
-  "proposedDuration",
-] as const;
-
-export const metricsFieldNames = [
-  "primaryProbeSetIds",
-  "secondaryProbeSetIds",
-] as const;
-
-type OverviewFieldNames = typeof overviewFieldNames[number];
-type AudienceFieldNames = typeof audienceFieldNames[number];
-type MetricsFieldNames = typeof metricsFieldNames[number];
-
-export type FieldNames =
-  | OverviewFieldNames
-  | AudienceFieldNames
-  | MetricsFieldNames;
-
 // TODO: 'any' type on `onChange={(selectedOptions) => ...`,
 // it wants this, but can't seem to coerce it into SelectOption type
 // type SelectedOption = {

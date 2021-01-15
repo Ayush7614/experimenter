@@ -6,6 +6,10 @@ import React, { useState, useCallback } from "react";
 import { storiesOf } from "@storybook/react";
 import { ProtoForm, TestCases } from "./helpers";
 import { Container, Alert } from "react-bootstrap";
+import LinkExternal from "../../../src/components/LinkExternal";
+
+const MODELS_URL =
+  "https://github.com/mozilla/experimenter/blob/main/app/experimenter/experiments/models/nimbus.py";
 
 storiesOf("Design Documentation/Form Validation", module)
   .add("client-side validation", () => {
@@ -18,9 +22,7 @@ storiesOf("Design Documentation/Form Validation", module)
           Client-side validation should be used to prevent invalid mutations
           from being attempted (i.e. the wrong type or fields that cannot be{" "}
           <code>null</code> in the{" "}
-          <a href="https://github.com/mozilla/experimenter/blob/main/app/experimenter/experiments/models/nimbus.py">
-            database
-          </a>
+          <LinkExternal href={MODELS_URL}>database</LinkExternal>
           ). It should be used to validate fields that are required for launch
           or to duplicate server-side validation.
         </p>

@@ -7,7 +7,7 @@ import { storiesOf } from "@storybook/react";
 import { ProtoForm, TestCases } from "./helpers";
 import { Container, Alert } from "react-bootstrap";
 
-storiesOf("Design Guide/Form Validation", module)
+storiesOf("Design Documentation/Form Validation", module)
   .add("client-side validation", () => {
     const [submitErrors, setSubmitErrors] = useState<Record<string, any>>({});
 

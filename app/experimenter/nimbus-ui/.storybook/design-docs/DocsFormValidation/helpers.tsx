@@ -7,7 +7,8 @@ import Form from "react-bootstrap/Form";
 import Alert from "react-bootstrap/Alert";
 
 import { Card, Table } from "react-bootstrap";
-import { useCommonForm, FieldNames } from "../../../src/hooks";
+import { useCommonForm } from "../../../src/hooks";
+import InlineErrorIcon from "../../../src/components/InlineErrorIcon";
 
 export const TestCases: React.FunctionComponent = ({ children }) => (
   <Table>
@@ -23,7 +24,7 @@ export const TestCases: React.FunctionComponent = ({ children }) => (
 
 type ProtoFormProps = {
   demoInputs: Array<{
-    name: FieldNames;
+    name: string;
     label: string;
     defaultValue: string;
     required?: boolean;
@@ -85,11 +86,19 @@ export const ProtoForm = ({
               {submitErrors["*"]}
             </Alert>
           )}
-
           {demoInputs.map(
             ({ name, label, required = true, requiredAtLaunch }) => (
               <Form.Group key={name} controlId={name}>
-                <Form.Label>{label}</Form.Label>
+                <Form.Label>
+                  {label}
+
+                  {requiredAtLaunch && (
+                    <InlineErrorIcon
+                      name={name}
+                      message={`A valid ${label} must be set`}
+                    />
+                  )}
+                </Form.Label>
                 <Form.Control
                   {...formControlAttrs(
                     name,
@@ -98,11 +107,6 @@ export const ProtoForm = ({
                   type="text"
                 />
                 <FormErrors name={name} />
-                {requiredAtLaunch && (
-                  <Form.Text>
-                    You must include this field before launching.
-                  </Form.Text>
-                )}
               </Form.Group>
             ),
           )}

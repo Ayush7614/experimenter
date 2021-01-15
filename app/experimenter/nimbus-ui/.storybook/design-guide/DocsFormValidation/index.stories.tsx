@@ -73,11 +73,11 @@ storiesOf("Design Documentation/Form Validation", module)
       <Container className="pt-5">
         <h2>Required for launch</h2>
         <p>
-          Some fields like publicDescription are allowed to be null while
-          someone is editing a draft, but must be set before the experiment can
-          move to the review status. You should NOT mark these fields{" "}
-          <code>required</code>, but rather add help text that indicates they
-          must be filled out before launch.
+          Some fields like <code>publicDescription</code> are allowed to be{" "}
+          <code>null</code> while someone is editing a draft, but must be set
+          before the experiment can move to the review status. You should NOT
+          mark these fields <code>required</code>, but rather add help text that
+          indicates they must be filled out before launch.
         </p>
         <ProtoForm
           demoInputs={[

@@ -95,9 +95,8 @@ storiesOf("Design Documentation/Form Validation", module)
             },
           ]}
           isLoading={false}
-          isServerValid={true}
-          submitErrors={submitErrors}
-          setSubmitErrors={setSubmitErrors}
+          isServerValid
+          {...{ submitErrors, setSubmitErrors }}
           onSubmit={() => {}}
         />
       </Container>
@@ -133,9 +132,8 @@ storiesOf("Design Documentation/Form Validation", module)
           demoInputs={[
             { name: "name", label: "Name", defaultValue: "really common name" },
           ]}
-          isLoading={isLoading}
-          isServerValid={isServerValid}
-          submitErrors={submitErrors}
+          isServerValid
+          {...{ submitErrors, setSubmitErrors }}
           setSubmitErrors={setSubmitErrors}
           onSubmit={onFormSubmit}
         />

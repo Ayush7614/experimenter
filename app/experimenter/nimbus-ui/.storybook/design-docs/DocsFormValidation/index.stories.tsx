@@ -11,7 +11,7 @@ import LinkExternal from "../../../src/components/LinkExternal";
 const MODELS_URL =
   "https://github.com/mozilla/experimenter/blob/main/app/experimenter/experiments/models/nimbus.py";
 
-storiesOf("Design Documentation/Form Validation", module)
+storiesOf("Design Docs/Form Validation", module)
   .add("client-side validation", () => {
     const [submitErrors, setSubmitErrors] = useState<Record<string, any>>({});
 

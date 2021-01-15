@@ -7,6 +7,7 @@ import { storiesOf } from "@storybook/react";
 import { ProtoForm, TestCases } from "./helpers";
 import { Container, Alert } from "react-bootstrap";
 import LinkExternal from "../../../src/components/LinkExternal";
+import InlineErrorIcon from "../../../src/components/InlineErrorIcon";
 
 const MODELS_URL =
   "https://github.com/mozilla/experimenter/blob/main/app/experimenter/experiments/models/nimbus.py";
@@ -76,8 +77,13 @@ storiesOf("Design Docs/Form Validation", module)
           Some fields like <code>publicDescription</code> are allowed to be{" "}
           <code>null</code> while someone is editing a draft, but must be set
           before the experiment can move to the review status. You should NOT
-          mark these fields <code>required</code>, but rather add help text that
-          indicates they must be filled out before launch.
+          mark these fields <code>required</code>, but rather add an{" "}
+          <code>InlineErrorIcon</code> (
+          <InlineErrorIcon
+            name="example"
+            message="A tooltip hint about this being required to launch"
+          />
+          ) with a tooltip indicating they must be filled out before launch.
         </p>
         <ProtoForm
           demoInputs={[
@@ -99,6 +105,17 @@ storiesOf("Design Docs/Form Validation", module)
           {...{ submitErrors, setSubmitErrors }}
           onSubmit={() => {}}
         />
+
+        <TestCases>
+          <tr>
+            <td>Type something in the Public Description field.</td>
+            <td>The warning icon should disappear</td>
+          </tr>
+          <tr>
+            <td>Remove all the text from the Public Description field.</td>
+            <td>The warning icon should show up again.</td>
+          </tr>
+        </TestCases>
       </Container>
     );
   })

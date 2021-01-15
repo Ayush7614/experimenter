@@ -57,6 +57,7 @@ export const ProtoForm = ({
     handleSubmit,
     reset,
     isSubmitted,
+    getValues,
   } = useCommonForm(
     defaultValues,
     isServerValid,
@@ -92,7 +93,7 @@ export const ProtoForm = ({
                 <Form.Label>
                   {label}
 
-                  {requiredAtLaunch && (
+                  {requiredAtLaunch && !getValues(name) && (
                     <InlineErrorIcon
                       name={name}
                       message={`A valid ${label} must be set`}

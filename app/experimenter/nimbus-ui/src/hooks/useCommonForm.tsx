@@ -27,6 +27,7 @@ export function useCommonForm<FieldNames extends string>(
     register,
     reset,
     errors,
+    getValues,
     formState: { isSubmitted, isDirty, touched, isValid: isClientValid },
   } = useForm({
     mode: "onTouched",
@@ -114,6 +115,7 @@ export function useCommonForm<FieldNames extends string>(
     formSelectAttrs,
     handleSubmit,
     reset,
+    getValues,
     isValid,
     isDirtyUnsaved,
     isSubmitted,

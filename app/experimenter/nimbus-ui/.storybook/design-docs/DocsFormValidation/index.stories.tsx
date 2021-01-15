@@ -132,6 +132,7 @@ storiesOf("Design Documentation/Form Validation", module)
           demoInputs={[
             { name: "name", label: "Name", defaultValue: "really common name" },
           ]}
+          isLoading={false}
           isServerValid
           {...{ submitErrors, setSubmitErrors }}
           setSubmitErrors={setSubmitErrors}

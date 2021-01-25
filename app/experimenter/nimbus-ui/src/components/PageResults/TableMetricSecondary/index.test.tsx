@@ -88,4 +88,20 @@ describe("TableMetricSecondary", () => {
     expect(positiveBlock).not.toBeInTheDocument();
     expect(neutralBlock).not.toBeInTheDocument();
   });
+
+  it("shows expected count values", async () => {
+    const { mock, experiment } = mockExperimentQuery("demo-slug");
+    render(
+      <RouterSlugProvider mocks={[mock]}>
+        <TableMetricSecondary
+          results={mockAnalysis().overall}
+          probeSetSlug={experiment.secondaryProbeSets![0]!.slug}
+          probeSetName={experiment.secondaryProbeSets![0]!.name}
+          isDefault={false}
+        />
+      </RouterSlugProvider>,
+    );
+
+    expect(screen.queryAllByText("0.02 to 0.08")).toHaveLength(2);
+  });
 });

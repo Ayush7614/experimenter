@@ -94,7 +94,7 @@ describe("FormOverview", () => {
     }
   };
 
-  const checkExistingForm = async (expected: Record<string, string>) => {
+  const checkExistingForm = async (expected: Record<string, any>) => {
     for (const [labelText, fieldValue] of [
       ["Public name", expected.name],
       ["Hypothesis", expected.hypothesis],
@@ -132,6 +132,7 @@ describe("FormOverview", () => {
       hypothesis: experiment.hypothesis as string,
       publicDescription: experiment.publicDescription as string,
       riskMitigationLink: experiment.riskMitigationLink as string,
+      documentationLinks: experiment.documentationLinks as Record<string, any>,
     };
 
     const onSubmit = jest.fn();

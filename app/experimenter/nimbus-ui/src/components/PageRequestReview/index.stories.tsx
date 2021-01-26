@@ -10,6 +10,7 @@ import { mockExperimentQuery } from "../../lib/mocks";
 import { RouterSlugProvider } from "../../lib/test-utils";
 import { NimbusExperimentStatus } from "../../types/globalTypes";
 import { createMutationMock } from "./mocks";
+import { MockConfigContext } from "../../hooks/useConfig";
 
 const { mock, experiment } = mockExperimentQuery("demo-slug");
 
@@ -30,6 +31,33 @@ storiesOf("pages/RequestReview", module)
       status: NimbusExperimentStatus.ACCEPTED,
     });
 
+    return (
+      <RouterSlugProvider mocks={[mock]}>
+        <PageRequestReview polling={false} />
+      </RouterSlugProvider>
+    );
+  });
+
+storiesOf("pages/RequestReview/EXP-866", module)
+  .addDecorator((getStory) => (
+    <MockConfigContext.Provider
+      value={{ featureFlags: { exp866Preview: true } }}
+    >
+      {getStory()}
+    </MockConfigContext.Provider>
+  ))
+  .add("draft status", () => {
+    return (
+      <RouterSlugProvider mocks={[mock]}>
+        <PageRequestReview polling={false} />
+      </RouterSlugProvider>
+    );
+  })
+  .add("preview status", () => {
+    const { mock } = mockExperimentQuery("demo-slug", {
+      // @ts-ignore EXP-866 mock value until backend API & types are updated
+      status: "PREVIEW",
+    });
     return (
       <RouterSlugProvider mocks={[mock]}>
         <PageRequestReview polling={false} />

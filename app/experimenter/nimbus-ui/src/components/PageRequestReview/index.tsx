@@ -17,14 +17,29 @@ import { updateExperimentStatus_updateExperiment as UpdateExperimentStatus } fro
 import AppLayoutWithExperiment from "../AppLayoutWithExperiment";
 import Summary from "../Summary";
 import FormRequestReview from "./FormRequestReview";
+import Alert from "react-bootstrap/Alert";
+import { useConfig } from "../../hooks/useConfig";
+import FormLaunchDraftToPreview from "./FormLaunchDraftToPreview";
+import FormLaunchDraftToProduction from "./FormLaunchDraftToProduction";
+import FormLaunchPreviewToProduction from "./FormLaunchPreviewToProduction";
 
-type PageRequestReviewProps = {
-  polling?: boolean;
-} & RouteComponentProps;
-
-const PageRequestReview: React.FunctionComponent<PageRequestReviewProps> = ({
+const PageRequestReview = ({
   polling = true,
-}) => {
+}: {
+  polling?: boolean;
+} & RouteComponentProps) => {
+  const { featureFlags } = useConfig();
+  /* istanbul ignore next until EXP-866 final */
+  const [
+    showLaunchDraftToProduction,
+    setShowLaunchDraftToProduction,
+  ] = useState(false);
+  /* istanbul ignore next until EXP-866 final */
+  const toggleShowLaunchDraftToProduction = useCallback(
+    () => setShowLaunchDraftToProduction(!showLaunchDraftToProduction),
+    [showLaunchDraftToProduction, setShowLaunchDraftToProduction],
+  );
+
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitSuccess, setSubmitSuccess] = useState<boolean>(false);
   const currentExperiment = useRef<getExperiment_experimentBySlug>();
@@ -84,22 +99,74 @@ const PageRequestReview: React.FunctionComponent<PageRequestReviewProps> = ({
 
         return (
           <>
+            {
+              /* istanbul ignore next */ featureFlags.exp866Preview && (
+                <>
+                  {submitError && (
+                    <Alert data-testid="submit-error" variant="warning">
+                      {submitError}
+                    </Alert>
+                  )}
+
+                  {(submitSuccess || status.review) && (
+                    <p className="my-5" data-testid="in-review-label">
+                      All set! Your experiment is now <b>waiting for review</b>.
+                    </p>
+                  )}
+
+                  {!submitSuccess &&
+                    status.draft &&
+                    (showLaunchDraftToProduction ? (
+                      <FormLaunchDraftToProduction
+                        {...{
+                          isLoading: loading,
+                          onSubmit: onLaunchClicked,
+                          onCancel: toggleShowLaunchDraftToProduction,
+                        }}
+                      />
+                    ) : (
+                      <FormLaunchDraftToPreview
+                        {...{
+                          isLoading: loading,
+                          onSubmit: onLaunchClicked,
+                          onLaunchWithoutPreview: toggleShowLaunchDraftToProduction,
+                        }}
+                      />
+                    ))}
+
+                  {!submitSuccess && status.preview && (
+                    <FormLaunchPreviewToProduction
+                      {...{
+                        isLoading: loading,
+                        onSubmit: onLaunchClicked,
+                        onBackToDraft: toggleShowLaunchDraftToProduction,
+                      }}
+                    />
+                  )}
+                </>
+              )
+            }
+
             <Summary {...{ experiment }} />
 
-            {(submitSuccess || status.review) && (
-              <p className="my-5" data-testid="in-review-label">
-                All set! Your experiment is now <b>waiting for review</b>.
-              </p>
-            )}
+            {!featureFlags.exp866Preview && (
+              <>
+                {(submitSuccess || status.review) && (
+                  <p className="my-5" data-testid="in-review-label">
+                    All set! Your experiment is now <b>waiting for review</b>.
+                  </p>
+                )}
 
-            {!submitSuccess && status.draft && (
-              <FormRequestReview
-                {...{
-                  isLoading: loading,
-                  submitError,
-                  onSubmit: onLaunchClicked,
-                }}
-              />
+                {!submitSuccess && status.draft && (
+                  <FormRequestReview
+                    {...{
+                      isLoading: loading,
+                      submitError,
+                      onSubmit: onLaunchClicked,
+                    }}
+                  />
+                )}
+              </>
             )}
           </>
         );
